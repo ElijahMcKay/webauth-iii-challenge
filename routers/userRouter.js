@@ -1,15 +1,16 @@
-// helper imports
-const Users = require('../data/db-helpers'); 
-
 const router = require('express').Router(); 
 const bcrypt = require('bcryptjs'); 
 const secrets = require('../config/secrets'); 
+const restricted = require('../middleware/restricted-middleware')
+// const jwt = require('jsonwebtoken'); 
+
+const Users = require('../data/db-helpers'); 
 
 // get requests 
-router.get('/users', protected, (req, res) => {
+router.get('/users', restricted, (req, res) => {
     Users.getUsers({ username })
         .then(user => {
-
+            res.status(201).json(user); 
         })
         .catch(err => {
             res.status(500).json({ message: err }); 
@@ -18,7 +19,7 @@ router.get('/users', protected, (req, res) => {
 
 // post requests
 router.post('/register', (req, res) => {
-    const body = req.body; 
+    const body = req.body
 
     let hash = bcrypt.hashSync(body.password, 12); 
 
@@ -26,28 +27,29 @@ router.post('/register', (req, res) => {
 
     Users.addUser(body)
         .then(user => {
-            res.json(201).json(user); 
+            res.status(201).json(user); 
         })
         .catch(err => {
-            res.status(500).json({ message: err }); 
+            res.status(500).json(err); 
         })
 })
 
 router.post('/login', (req, res) => {
-    const body = req.body; 
+    const { username, password } = req.body;  
 
-    Users.findBy({ username })
-        .first()
+    Users.findBy(username)
         .then(user => {
-            if(user && bcrypt.compareSync(password, user.password) {
+            if(user && bcrypt.compareSync(password, user.password)) {
                 const token = generateUserToken(user)
-                res.status(201).json({ message: `Welcome ${user.username}!`, token }); 
+                res.status(201).json({ message: `Welcome ${user.username}!`, 
+                token 
+            }); 
             } else {
-                res.status(500).json({ message: 'Invalid Credentials' })
+                res.status(501).json('Error')
             }
         })
         .catch(err => {
-            res.status(500).json({ message: err }); 
+            res.status(500).json({ message: `${err}` }); 
         })
 })
 
